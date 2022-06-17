@@ -1,38 +1,44 @@
-# coding: UTF-8
-import requests
-import lxml.html
+# main.pyの中身サンプル
+
+# Selenium
 from selenium import webdriver
+# ChromeDriverのバージョンを合わせるらしい
+import chromedriver_binary
+from webdriver_manager.chrome import ChromeDriverManager
+# ページが読み込まれるまで待機するモジュール
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+# ChromeDriverのオプション用モジュール
 from selenium.webdriver.chrome.options import Options
 
-D_path = r"C:\chromedriver_win32\chromedriver.exe"
-B_path = r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
+# ドライバーのパス指定
+driver_path = '/app/.chromedriver/bin/chromedriver' #←ローカル上ではコメントアウト
+#driver_path = r"C:\chromedriver_win32\chromedriver.exe" #←ローカル上専用
 
-def get_lxml_html(url, proxy, tmp_header):
-    r = requests.get(url)
-    html = lxml.html.fromstring(r.content)
-    return html
+# Headless Chromeをあらゆる環境で起動させるオプション
+options = Options()
 
-def chrome_webdriver_get_html(url):
-    #JavaScriptで書かれている?のでSeleniumでテキストを抜き出す必要がある(Beautiful Soupでは抜き出せない)
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.binary_location = B_path#r'C:UsersSugataAppDataLocalGoogleChrome SxSApplicationchrome.exe'
-    driver = webdriver.Chrome(options=options, executable_path=D_path)
-    
-    print("driver_get_start")
-    driver.get(url)
-    print("driver_get_end")
-    
-    print("portURL_get_start")
+options.add_argument('--disable-gpu');
+options.add_argument('--disable-extensions');
+options.add_argument('--proxy-server="direct://"');
+options.add_argument('--proxy-bypass-list=*');
+options.add_argument('--start-maximized');
 
-    return (lxml.html.fromstring(driver.page_source))
-    #return html  
+options.add_argument('--headless');
 
+#クローラーの起動
+driver = webdriver.Chrome(executable_path = driver_path, options=options)
 
-def main(): 
-    url = "https://www.nicosuma.com/market-price/iphone"
-    print(chrome_webdriver_get_html(url))
-    
-if __name__ == '__main__':
-    main()
+# ページへアクセス
+driver.get('https://info.finance.yahoo.co.jp/fx/')
+# ページが読み込まれるまでの最大待機時間（10秒）
+wait = WebDriverWait(driver, 10)
+# ページが読み込まれるまで待機
+wait.until(EC.presence_of_all_elements_located)
+
+# ドル円を表示
+print(driver.page_source)
+
+# ドライバーを終了させる
+driver.close()
+driver.quit()
